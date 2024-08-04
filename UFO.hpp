@@ -29,10 +29,13 @@ class UFO
 };
 
 
+// Default constructor
 UFO::UFO() : city(""), state(""), shape(""), duration(0.0f), year(0) {}
 
+// Parameritized constructor
 UFO::UFO(string c, string st, string sh, float d, int y) : city(c), state(st), shape(sh), duration(d), year(y) {}
 
+// Reads a single line from the ufo_sightings.csv file and assigns all variables
 void UFO::ReadLine(istringstream& stream)
 {
     // city, state, and shape are all strings, no special consideration necessary
@@ -40,7 +43,7 @@ void UFO::ReadLine(istringstream& stream)
     getline(stream, state, ',');
     getline(stream, shape, ',');
 
-    // duration and year are integers, use a token to get string then convert using stoi()
+    // duration and year are integers, use a token to get string then convert using stoi() or stof()
     string token;
     getline(stream, token, ',');
     duration = stof(token);
@@ -56,6 +59,7 @@ string UFO::getShape() { return shape; }
 float UFO::getDuration() { return duration; }
 int UFO::getYear() { return year; }
 
+// Used to trim off trailing zeros for clean printing of the duration
 string UFO::FormatDuration()
 {
     string d = to_string(duration);
@@ -67,13 +71,16 @@ string UFO::FormatDuration()
     return d;
 }
 
+// Prints all attributes in order
 string UFO::Print()
 {
     return "City: " + city + " | State: " + state + " | Shape: " + shape + " | Duration: " + FormatDuration() + " | Year: " + to_string(year);
 }
 
+// Resets this object's variables
 void UFO::Reset() { city = ""; state = ""; shape = ""; duration = 0.0f; year = 0; }
 
+// Hashing function
 int UFO::Hash(int buckets)
 {
     return ((year * int(duration)) / city.size()) % buckets;

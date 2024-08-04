@@ -49,9 +49,15 @@ int ValidateYear(string& y) {
 
 int main()
 {
+    // Procedure for calculating elapsed time, repeated several times throughout the main file
+
+    // Get time before executing operation
     auto startInitialization = steady_clock::now();
+    // Perform operation
     Map sample;
+    // Get time after executing operation
     auto stopInitialization = steady_clock::now();
+    // Calculate elapsed time by calculating the difference between the two recorded times
     auto durationInitialization = duration_cast<milliseconds>(stopInitialization - startInitialization);
     cout << "Map initialization complete, took " << durationInitialization.count() << " milliseconds." << endl;
 
