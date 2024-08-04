@@ -31,7 +31,7 @@ class Map
 
 // Constructor
 Map::Map() {
-    ifstream inFile("ufo_sightings.csv");
+    ifstream inFile("../ufo_sightings.csv");
 
     if (inFile.is_open())
     {
