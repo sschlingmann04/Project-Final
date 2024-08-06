@@ -47,6 +47,7 @@ Map::Map() {
             newUFO.ReadLine(stream);
             Insert(newUFO);
         }
+        inFile.close();
     }
     else
         cout << "An error has occurred!";
