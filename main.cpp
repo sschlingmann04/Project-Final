@@ -1,273 +1,203 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <chrono>
 #include <SFML/Graphics.hpp>
-#include "Button.h"
-#include <random>
+#include "HashMap.h"
+#include "Map.h"
+#include "entryWindow.h"
+#include <tuple>
+
+using namespace std::chrono;
 using namespace std;
 
+void openFile(HashMap& hashMap, const string& filename) {
+    //int lineCount = 0;
+    ifstream file(filename);
+    string line, state, city, shape, duration, year;
+    auto startHashMap = steady_clock::now();
+    if (file.is_open()) {
+        getline(file, line);
+        while (getline(file, line)) {
+            istringstream ss(line);
+            if (getline(ss, city, ',') && getline(ss, state, ',') &&
+                getline(ss, shape, ',') && getline(ss, duration, ',') &&
+                getline(ss, year, ',')) {
+                string combined = "State: " + state + ", City: " + city + ", Shape: " + shape + ", Duration: " + duration + ", Year: " + year;
+                string uniqueKey = city + state + shape + duration + year;
+                hashMap.insert(uniqueKey, combined);
+                //customMap.Insert(city, state, shape, stof(duration), stoi(year));
+                //lineCount++;
+                //cout << lineCount << endl;
+            }
+        }
+        file.close();
+    }
+    else {
+        cerr << "failed to open " << filename << endl;
+        return;
+    }
+    auto stopHashMap = steady_clock::now();
+    auto durationHashMap = duration_cast<milliseconds>(stopHashMap - startHashMap);
+    cout << "Inserting data into HashMap took " << durationHashMap.count() << " milliseconds." << endl;
+}
+
 int main() {
-    int width = 1500;
-    int height = 1000;
-
-    sf::RenderWindow window(sf::VideoMode(width, height), "UFO Sightings!", sf::Style::Close | sf::Style::Titlebar);
-
-    // Load font
     sf::Font font;
     font.loadFromFile("../files/font.ttf");
 
-    // Define button attributes
-    sf::Vector2f buttonSize(160, 70);
-    std::vector<std::string> labels = { "City", "State", "Shape", "Year" };
-    std::vector<Button> buttons;
+    int width = 1500;
+    int height = 1000;
 
-    // Create buttons
-    for (size_t i = 0; i < labels.size(); i++) {
-        buttons.emplace_back(buttonSize, sf::Vector2f(380 + i * 200, 360), labels[i], font);
-    }
+    sf::Text topText;
+    topText.setFont(font);
+    topText.setCharacterSize(50);
+    topText.setStyle(sf::Text::Bold | sf::Text::Underlined);
+    topText.setOutlineColor(sf::Color::Black);
+    topText.setOutlineThickness(3);
+    topText.setFillColor(sf::Color::White);
+    topText.setPosition(width / 2.0f, height / 8.0f);
+    topText.setOrigin(topText.getGlobalBounds().width / 2.0f, 0);
 
-    Button submit(buttonSize, {680, 600}, "Submit", font);
-
-    sf::Text welcomeText;
-    welcomeText.setString("USA UFO SIGHTINGS!");
-    welcomeText.setFont(font);
-    welcomeText.setCharacterSize(50);
-    welcomeText.setStyle(sf::Text::Bold | sf::Text::Underlined);
-    welcomeText.setOutlineColor(sf::Color::Black);
-    welcomeText.setOutlineThickness(3);
-    welcomeText.setFillColor(sf::Color::White);
-    welcomeText.setPosition(width / 2.0f, height / 5.0f );
-    welcomeText.setOrigin(welcomeText.getGlobalBounds().width / 2.0f, 0);
-
-
-    sf::Text parameterPrompt;
-    parameterPrompt.setString(" Hashmap vs Map\nSelect Parameter:");
-    parameterPrompt.setFont(font);
-    parameterPrompt.setStyle(sf::Text::Bold);
-    parameterPrompt.setFillColor(sf::Color::White);
-    parameterPrompt.setCharacterSize(34);
-    parameterPrompt.setPosition(width / 2.0f, height / 5.0f + 75);
-    parameterPrompt.setOrigin(parameterPrompt.getLocalBounds().width / 2.0f, 0);
-
-    sf::Text specific;
-    specific.setString("Enter Specific Search:");
-    specific.setFont(font);
-    specific.setStyle(sf::Text::Bold);
-    specific.setFillColor(sf::Color::White);
-    specific.setCharacterSize(34);
-    specific.setPosition(width / 2.0f - 20, height / 2.0f - 20);
-    specific.setOrigin(parameterPrompt.getLocalBounds().width / 2.0f, 0);
-
-    sf::Text byPass; // byPass specified parameters
-    byPass.setString("For all Sightings, Press Submit Only");
-    byPass.setFont(font);
-    byPass.setStyle(sf::Text::Bold);
-    byPass.setFillColor(sf::Color::White);
-    byPass.setCharacterSize(34);
-    byPass.setPosition(width / 2.0f - 200, height / 2.0f + 340);
-    byPass.setOrigin(parameterPrompt.getLocalBounds().width / 2.0f, 0);
-
-
-
-
-
-    sf::Text output;
+    sf::Text output; // outputs map
     output.setFont(font);
     output.setStyle(sf::Text::Bold);
     output.setFillColor(sf::Color::White);
     output.setCharacterSize(30);
-    output.setPosition(width / 2.0f, height / 5.0f + 75);
-    output.setOrigin(parameterPrompt.getLocalBounds().width / 2.0f, 0);
+    output.setPosition(width/ 4.0f, height / 5.0f + 14);
+    output.setOrigin(output.getLocalBounds().width / 2.0f, 0);
 
-    sf::Text output2;
-    output2.setFont(font);
-    output2.setStyle(sf::Text::Bold);
-    output2.setFillColor(sf::Color::White);
-    output2.setCharacterSize(30);
-    output2.setOrigin(parameterPrompt.getLocalBounds().width / 2.0f, 0);
+    sf::Text outputHash; // outputs hashMap
+    outputHash.setFont(font);
+    outputHash.setStyle(sf::Text::Bold);
+    outputHash.setFillColor(sf::Color::White);
+    outputHash.setCharacterSize(12);
+    outputHash.setPosition(width / 1.8f, height / 5.0f + 14);
+    outputHash.setOrigin(outputHash.getLocalBounds().width / 2.0f, 0);
 
-    sf::Text userInput;
-    userInput.setFont(font);
-    userInput.setCharacterSize(34);
-    userInput.setStyle(sf::Text::Bold);
-    userInput.setFillColor(sf::Color::Yellow);
-    userInput.setPosition(width / 2.0f, height / 5.0f + 340);
-    userInput.setOrigin(userInput.getLocalBounds().width / 2.0f, 0);
-
-    sf::RectangleShape rectangle(sf::Vector2f(3, 34));
-    rectangle.setFillColor(sf::Color::Yellow);
-    rectangle.setPosition(width / 2.0f, height / 5.0f + 340);
-    int adjustment = 0;
-    rectangle.setOrigin(userInput.getLocalBounds().width / 2.0f + adjustment, 0);
-
-    sf::Color colorPurple(35, 35, 70);
-
-    sf::Texture ufoImage1;
-    sf::Texture ufoImage2;
-    ufoImage1.loadFromFile("../files/images/ufoImage.png");
+    sf::Texture ufoImage2; // sets the background image
     ufoImage2.loadFromFile("../files/images/ufoResults.png");
 
     sf::Sprite ufo;
-    ufo.setTexture(ufoImage1);
+    ufo.setTexture(ufoImage2);
     ufo.setPosition(width / 2.0f, height / 2.0f - 75);
-    ufo.setOrigin(ufo.getLocalBounds().width / 2 , ufo.getLocalBounds().height / 2.35);
-    ufo.setScale(2,2);
-    ufo.setColor(sf::Color(255,255,255,128));
+    ufo.setOrigin(ufo.getLocalBounds().width / 2, ufo.getLocalBounds().height / 2.35);
+    ufo.setScale(2, 2);
+    ufo.setColor(sf::Color(255, 255, 255, 128));
 
-    bool windowVal = false;
-    string parameter = "";
-    string name = "";
+    tuple<string, string, bool> entry = createEntryWindow(); // makes the entry window
 
-    sf::Text nameDisplay;
+    // TODO: LOAD DATA FROM CSV TO THE DATA STRUCTURES
+    // TODO: OUTPUT THIS INTO THE SECOND PAGE SO THAT THE USER CAN READ IT
+    auto start = steady_clock::now();
+    HashMap hashMap(1000);
+    auto startMap = steady_clock::now();
+    Map customMap;
+    auto stopMap = steady_clock::now();
+    auto durationMap = duration_cast<milliseconds>(stopMap - startMap);
+    cout << "Inserting Map data took " << durationMap.count() << " milliseconds." << endl;
+    openFile(hashMap, "../testingUFO.csv");
+    auto stop = steady_clock::now();
+    auto duration = duration_cast<milliseconds>(stop - start);
+    cout << "Inserting total data took " << duration.count() << " milliseconds." << endl;
 
-    while (window.isOpen())
-    {
-        sf::Event event;
-        while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed) // Keep this
-                window.close();
+    string strHashMap = "Hashmap";
+    string strMap = "Map";
+    topText.setString("Searching for UFOs via " + get<0>(entry) + ": " + get<1>(entry));
 
-            if (event.type == sf::Event::TextEntered) {
-                if (event.text.unicode >= 32 ) {
-
-
-                    name += event.text.unicode;
-
-                    adjustment -= 20;
-                    userInput.setOrigin(userInput.getLocalBounds().width / 2.0f, 0);
-                    rectangle.setOrigin(userInput.getLocalBounds().width / 2.0f + adjustment, 0);
-
-                }
-                userInput.setString(name);
-            }
-
-            else if (event.type == sf::Event::KeyPressed) {
-                if (event.key.code == sf::Keyboard::Backspace) {
-                    name.pop_back();
-                    adjustment += 20;
-
-                    if (adjustment > userInput.getLocalBounds().width / 2.0f) {
-                        adjustment = userInput.getLocalBounds().width / 2.0f;
-                    }
-                    rectangle.setOrigin(userInput.getLocalBounds().width / 2.0f + adjustment, 0);
-                    userInput.setString(name);
-                }
-            }
-        }
-
-        if (event.type == sf::Event::MouseButtonPressed) {
-            if (event.mouseButton.button == sf::Mouse::Left) {
-                sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
-
-                // Check which buttons were clicked and activate it
-                for (auto& button : buttons) {
-                    if (button.isClicked(mousePos)) {
-                        // Deactivate all buttons
-                        for (auto &otherButton: buttons) {
-                            otherButton.setActive(false);
-                        }
-                        // Activate the clicked button
-                        button.setActive(true);
-                        parameter = button.label;
-                    }
-                }
-                if (submit.isClicked(mousePos)){
-                    submit.setActive(true);
-                    cout << "submitted parameter" << parameter << ":  \nspecific" << name << "  \n"  <<  submit.label;
-                    window.close();
-                    windowVal = true;
-                }
-            }
-        }
-
-
-
-        window.clear(colorPurple); // Keep Drawings Below this line
-        window.draw(ufo);
-        window.draw(welcomeText);
-        window.draw(parameterPrompt);
-        window.draw(specific);
-        window.draw(byPass);
-        window.draw(rectangle);
-        window.draw(userInput);
-        for (const auto& button : buttons) {
-            window.draw(button.shape);
-            window.draw(button.text);
-        }
-        window.draw(submit.shape);
-        window.draw(submit.text);
-        window.draw(nameDisplay);
-
-        // #TODO cout << name << endl;
-        window.display(); // Keep All Drawings Above this line
-
-
+    // TODO: OUTPUT THE TIME CALCULATIONS INTO THE SECOND PAGE SO THAT THE USER CAN READ IT
+    if (get<0>(entry) == "City"){
+        auto startCityHashMap = steady_clock::now();
+        strHashMap = hashMap.searchCity(get<1>(entry));
+        auto stopCityHashMap = steady_clock::now();
+        auto durationCityHashMap = duration_cast<milliseconds>(stopCityHashMap - startCityHashMap);
+        cout << "HashMap search for city took " << durationCityHashMap.count() << " milliseconds." << endl;
 
     }
+    else if (get<0>(entry) == "State"){
+        auto startStateHashMap = steady_clock::now();
+        strHashMap = hashMap.searchState(get<1>(entry));
+        auto stopStateHashMap = steady_clock::now();
+        auto durationStateHashMap = duration_cast<milliseconds>(stopStateHashMap - startStateHashMap);
+        cout << "HashMap search for state took " << durationStateHashMap.count() << " milliseconds." << endl;
+    }
+    else if (get<0>(entry) == "Shape"){
+        auto startShapeHashMap = steady_clock::now();
+        strHashMap = hashMap.searchShape(get<1>(entry));
+        auto stopShapeHashMap = steady_clock::now();
+        auto durationShapeHashMap = duration_cast<milliseconds>(stopShapeHashMap - startShapeHashMap);
+        cout << "HashMap search for shape took " << durationShapeHashMap.count() << " milliseconds." << endl;
+    }
+    else if (get<0>(entry) == "Year"){
+        auto startYearHashMap = steady_clock::now();
+        strHashMap = hashMap.searchYear(get<1>(entry));
+        auto stopYearHashMap = steady_clock::now();
+        auto durationYearHashMap = duration_cast<milliseconds>(stopYearHashMap - startYearHashMap);
+        cout << "HashMap search for year took " << durationYearHashMap.count() << " milliseconds." << endl;
+    }
+    else{
+        topText.setString("All UFO Sightings in the USA");
+        auto startPrintHashMap = steady_clock::now();
+        strHashMap = hashMap.print();
+        auto stopPrintHashMap = steady_clock::now();
+        auto durationPrintHashMap = duration_cast<milliseconds>(stopPrintHashMap - startPrintHashMap);
+        cout << "HashMap print took " << durationPrintHashMap.count() << " milliseconds." << endl;
+    }
 
-    sf::RenderWindow Results(sf::VideoMode(width, height), "Hashmap vs Hashtable", sf::Style::Close | sf::Style::Titlebar);
+
+    // Creating the second window to display the data
+    sf::RenderWindow Results(sf::VideoMode(1500, 1000), "Hashmap vs Hashtable", sf::Style::Close | sf::Style::Titlebar);
+
+    // creating a static window so that the user can scroll down
     sf::View view(sf::FloatRect(0, 0, width, height));
-
     view.setCenter(width / 2 , height / 2);
     sf::RectangleShape largeContent(sf::Vector2f(800, 2000));
     largeContent.setFillColor(sf::Color::Green);
 
-    while (Results.isOpen() && windowVal == true) {
+
+    while (Results.isOpen()) {
         sf::Event event;
-        welcomeText.setString("Searching for UFOS via: " + name);
-        welcomeText.setOrigin(welcomeText.getGlobalBounds().width / 2.0f, 0);
+
+        // center text
+        topText.setOrigin(topText.getGlobalBounds().width / 2.0f, 0);
+
         while (Results.pollEvent(event)) {
-            if (event.type == sf::Event::Closed) // Keep this
+            if (event.type == sf::Event::Closed)
                 Results.close();
-            if (event.type == sf::Event::MouseWheelScrolled)
-            {
-                if (event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel)
-                {
+            if (event.type == sf::Event::MouseWheelScrolled){
+                if (event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel){
                     // Adjust the view's center to scroll up or down
-                    float scrollSpeed = 30.0f;
+                    float scrollSpeed = 60.0f;
                     view.move(0, -event.mouseWheelScroll.delta * scrollSpeed);
                 }
             }
-            float viewHeight = window.getSize().y;
+
+            // adjust view of the screen while the user scrolls
+            float viewHeight = height;
             float contentHeight = largeContent.getSize().y;
             sf::Vector2f viewCenter = view.getCenter();
-            if (viewCenter.y - viewHeight / 2 < 0)
+            if (viewCenter.y - viewHeight / 2 < 0) {
                 view.setCenter(viewCenter.x, viewHeight / 2);
-            else if (viewCenter.y + viewHeight / 2 > contentHeight)
+            }
+            else if (viewCenter.y + viewHeight / 2 > contentHeight){
                 view.setCenter(viewCenter.x, contentHeight - viewHeight / 2);
-
-            string map = "Hashmap";
-            string table = "Map";
-            string foo = "";
-            string boop = "";
-
-            for (auto i : map){
-                foo += i;
-                foo += "\n";
             }
-            for (auto j : table){
-                boop += j;
-                boop += "\n";
-            }
-            output.setString(foo);
-            output2.setString(boop);
 
-
+            output.setString(strMap);
+            outputHash.setString(strHashMap);
         }
-        output.setPosition(width/ 4.0f, height / 5.0f + 75);
-        output2.setPosition(width - 100, height / 5.0f + 75);
 
+        // create elements for the results screen
         ufo.setTexture(ufoImage2);
-        Results.clear(colorPurple);
-        Results.setView(view);
-
-        Results.draw(output);
-        Results.draw(output2);
+        Results.clear(sf::Color((35, 35, 70)));
         Results.draw(ufo);
-        Results.draw(welcomeText);
-
+        Results.setView(view);
+        Results.draw(output);
+        Results.draw(outputHash);
+        Results.draw(topText);
         Results.display();
+
     }
 
 }
